@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Linux,技术," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="主要介绍在initcall_debug的开启和一些观察initcall调用的技巧。">
+<meta name="keywords" content="Linux,技术">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux下initcall的查看">
+<meta property="og:url" content="http://yoursite.com/2018/10/10/Linux下initcall的查看/index.html">
+<meta property="og:site_name" content="Phragmites">
+<meta property="og:description" content="主要介绍在initcall_debug的开启和一些观察initcall调用的技巧。">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="http://yoursite.com/Users/jinhongye/Downloads/VirtualBox_UB18_10_10_2018_11_24_53.png">
+<meta property="og:image" content="http://yoursite.com/Users/jinhongye/Desktop/屏幕快照%202018-10-10%20下午1.17.00.png">
+<meta property="og:image" content="http://yoursite.com/Users/jinhongye/Downloads/bootchart-20181009-0317.svg">
+<meta property="og:updated_time" content="2018-10-10T10:28:25.762Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux下initcall的查看">
+<meta name="twitter:description" content="主要介绍在initcall_debug的开启和一些观察initcall调用的技巧。">
+<meta name="twitter:image" content="http://yoursite.com/Users/jinhongye/Downloads/VirtualBox_UB18_10_10_2018_11_24_53.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/10/10/Linux下initcall的查看/"/>
+
+
+
+
+
+  <title>Linux下initcall的查看 | Phragmites</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="default">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Phragmites</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/Categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-timeline">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Timeline
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/About/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/10/10/Linux下initcall的查看/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Mooler">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Phragmites">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Linux下initcall的查看</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-10-10T18:10:15+08:00">
+                2018-10-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/Categories/操作系统/" itemprop="url" rel="index">
+                    <span itemprop="name">操作系统</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>主要介绍在initcall_debug的开启和一些观察initcall调用的技巧。<br><a id="more"></a></p>
+<h3 id="开启-initcall-debug-并获取trace信息"><a href="#开启-initcall-debug-并获取trace信息" class="headerlink" title="开启 initcall_debug,并获取trace信息"></a>开启 initcall_debug,并获取trace信息</h3><p>​    想要开启initcall_debug主要是要能够给kernel commanline 传入内核启动的时候要求的参数。参数可以在进入/etc/defualt文件夹下，以sudo权限打开grub文件。如下：  在 GRUB_CMDLINE_LINUX= 后的引号内加入 printk.time=y 及 initcall_debug 之间以空格隔开。保存后按照文件提示，执行update-grub，更新grub的配置文件。</p>
+<p><img src="/Users/jinhongye/Downloads/VirtualBox_UB18_10_10_2018_11_24_53.png" alt="VirtualBox_UB18_10_10_2018_11_24_53"><br>这样就可以永久打开initcall_debug。（参考：<a href="https://www.howtoforge.com/tutorial/kernel-boot-parameter-edit/）" target="_blank" rel="noopener">https://www.howtoforge.com/tutorial/kernel-boot-parameter-edit/）</a></p>
+<p>​    同时我把TIMEOUT_STYLE 设为了menu，这样开机的时候会自动显示grub界面，否则需要按shift进入。同时如果只是临时打开initcall_debug，可以在grub界面下，按 e，然后在含有<strong>linux</strong>字样的一行后面加入initcall_debug，然后按照提示正常boot启动即可。</p>
+<p>​    开启后，登陆系统后，在终端下使用dmesg 即可查看 所有的initcall。同时也可以进行筛选等，筛选和整理的办法参看：<a href="https://blog.csdn.net/qq_29729577/article/details/52062722。" target="_blank" rel="noopener">https://blog.csdn.net/qq_29729577/article/details/52062722。</a></p>
+<h3 id="采用boolgrah-pl生成SVG图形"><a href="#采用boolgrah-pl生成SVG图形" class="headerlink" title="采用boolgrah.pl生成SVG图形"></a>采用boolgrah.pl生成SVG图形</h3><p>​    boolgraph是一个perl脚本。本任务的主要难点在于找到boolgraph.bl脚本的位置。一开始的时候按照大多数人的说法去在/kernel路径下寻找，但是必然是找不到的。最后我在/usr/src下找到了一堆linux内核文件，然后选则了一个linux-headers-4.15.0-36-generic文件，进入之后终于发现了/kernel。下面的scripts/bootgraph.pl就是了。这个脚本可以直接使用dmesg输出的日志数据。具体操作如下：</p>
+<ul>
+<li>dmesg &gt; initdata 把dmesg的输出存进initdata文件里。</li>
+<li>然后cat initdata | perl scripts/bootgraph.pl &gt; out.svg 即可获得输出的svg图。可能需要sudo权限。</li>
+</ul>
+<p><img src="/Users/jinhongye/Desktop/屏幕快照 2018-10-10 下午1.17.00.png" alt="屏幕快照 2018-10-10 下午1.17.00"></p>
+<h3 id="查看前十大时间占用的initcall并分析"><a href="#查看前十大时间占用的initcall并分析" class="headerlink" title="查看前十大时间占用的initcall并分析"></a>查看前十大时间占用的initcall并分析</h3><p>​    关于initcall调用，先看看整体的initcall的结构。大部分initcall都由__define_initcall来执行 。那么根据内核源代码中init.h该函数的定义，define的第二个参数，会决定系统map代码的位置。基本上是几就代表了level是多少。比如几个常见的：module_initcall 是level 6，而subsys_initcall 是level 4。</p>
+<p>​    按照之前提到的initcall信息，简单利用指令筛选排序(见参考)，考虑到部分调用会被反复执行，故选择依据<strong>调用平均耗时(usecs)</strong>而非总耗时选出耗时前十大的initcall，分析见下。</p>
+<h4 id="aesni-init"><a href="#aesni-init" class="headerlink" title="aesni_init"></a>aesni_init</h4><p> 115762 usecs [    2.752484] initcall aesni_init+0x0/0x20e [aesni_intel] returned 0 </p>
+<p>功能：配置加载intel的AES-NI硬件加密解密CPU指令集。</p>
+<p>源代码: arch/x86/crypto/aesni-intel_glue.c  同时发现在1450行使用late_inticall回调该函数。那么在include/linux/module.h 下去寻找late_initcall。发现是一个宏late_initcall(fn)，被展开为module_initcall(fn)，而这一个initcall本身是level 6。</p>
+<h4 id="vgdrvLinuxModInit"><a href="#vgdrvLinuxModInit" class="headerlink" title="vgdrvLinuxModInit"></a>vgdrvLinuxModInit</h4><p> 125046 usecs [   10.004261] initcall vgdrvLinuxModInit+0x0/0x1000 [vboxguest] returned 0 </p>
+<p> 本调用遍寻内核代码而不得。遂google之。发现是因为使用vbox启动从而出现的一些调用。属于vbox源码的一部分。<br> (参见：<a href="https://www.virtualbox.org/svn/vbox/trunk/src/VBox/Additions/common/VBoxGuest/VBoxGuest-linux.c" target="_blank" rel="noopener">https://www.virtualbox.org/svn/vbox/trunk/src/VBox/Additions/common/VBoxGuest/VBoxGuest-linux.c</a>)<br> 有一个vgdrvLinuxModInit函数。对于linux下的虚拟机启动做了关于driver等等的一系列配置和初始化。最后同样是调用<br> module_init。但是考虑到实际的启动过程猜测可能是module_init的两种宏定义中level 0的定义？即一开始虚拟机启动的时候，应该没有优先级比vbox更高的了</p>
+<h4 id="acpi"><a href="#acpi" class="headerlink" title="acpi"></a>acpi</h4><p> 164619 usecs [    0.225807] initcall acpi_init+0x0/0x35e returned 0 </p>
+<p>功能：主要负责高级配置和电源管理接口(ACPI)的驱动加载。</p>
+<p> 源码位于：drivers/acpi/bus.c 最后由subsys_initcall调用。可知为level 4。</p>
+<h4 id="init-module"><a href="#init-module" class="headerlink" title="init_module"></a>init_module</h4><p> 560724 usecs [    6.194378] initcall init_module+0x0/0x1000 [raid6_pq] returned 0 </p>
+<p> 功能: 初始化和配置好RAID校验控制器。</p>
+<p> 源应该在：lib/raid6/agos.c 下 由module.h中的宏subsys_initcall使用。但是这个宏不同于上面提到的init.h下的 subsys_initcall，实际上是继续调用module_init的，所以是level 6。（这里专门指的是raid6所用的init_module）</p>
+<h4 id="piix4-driver-init"><a href="#piix4-driver-init" class="headerlink" title="piix4_driver_init"></a>piix4_driver_init</h4><p> 608134 usecs [    3.158972] initcall piix4_driver_init+0x0/0x1000 [i2c_piix4] returned 0 </p>
+<p> 这个调用负责：加载piix4驱动。英特尔的Piix4作为PCI的实现，它的一部分功能用以控制SMBus</p>
+<p> 其相应的源在：drivers/i2c/busses/i2c-piix4.c  仔细查看会发现关键调用点是 module_pci_driver()。进入include/linux/pci.h下查看函数声明。会发现这个函数是作为pci设备驱动注册器起作用的。本质还是使用module_init()<br> 也就是__initcall() 然后 device_initcall 。即为level 6。</p>
+<h4 id="ahi-pci-driver-init"><a href="#ahi-pci-driver-init" class="headerlink" title="ahi_pci_driver_init"></a>ahi_pci_driver_init</h4><p> 614983 usecs [    3.169385] initcall ahci_pci_driver_init+0x0/0x1000 [ahci] returned 0 </p>
+<p>功能：这个调用也是一个pci设备相关的驱动装载。这里是ACHI控制器。便于与SATA设备的数据交换。 </p>
+<p>源码位于: drivers/ata/ahci.c 同样调用module_pci_driver()。故为level 6。</p>
+<h4 id="e1000-init-module"><a href="#e1000-init-module" class="headerlink" title="e1000_init_module"></a>e1000_init_module</h4><p> 1068038 usecs [    3.613140] initcall e1000_init_module+0x0/0x1000 [e1000] returned 0  </p>
+<p>功能：主要工作是向pci子系统注册设备。注册的设备是intel的e1000以太网驱动。</p>
+<p> 源码位于：drivers/net/ethernet/intel/e1000/e1000_main.c  调用了module_init()去执行。故level 6。</p>
+<h4 id="populate-rootfs"><a href="#populate-rootfs" class="headerlink" title="populate_rootfs"></a>populate_rootfs</h4><p>1633442 usecs [    1.967799] initcall populate_rootfs+0x0/0x10f returned 0 </p>
+<p> 功能:是负责load著名的initramfs。并且同时可以在device_initcall之前load某些模块。</p>
+<p> 源码位于：init/initramfs.c 最后由rootfs_initcall调用。 在/boot下的System.map中可以看到populate_rootfs位于 inticall5 的范围内，故为level 5。</p>
+<h4 id="vbox-init"><a href="#vbox-init" class="headerlink" title="vbox_init"></a>vbox_init</h4><p> 8766235 usecs [   19.636833] initcall vbox_init+0x0/0x1000 [vboxvideo] returned 0</p>
+<p> 功能实在找不到。。。是在staging 目录下，感觉像是vbox的驱动。但是linux内核自带vbox驱动也太诡异了。</p>
+<p> 源码位于：drivers/staging/vboxvideo/vbox_drv.c  最终是moudle_init执行之，故而是level 6。</p>
+<h4 id="intel8x0-driver-init"><a href="#intel8x0-driver-init" class="headerlink" title="intel8x0_driver_init"></a>intel8x0_driver_init</h4><p> 8975403 usecs [   19.484776] initcall intel8x0_driver_init+0x0/0x1000 [snd_intel8x0] returned 0</p>
+<p> 功能：配置加载intel8x0声卡的驱动。</p>
+<p> 源码位于 sound/pci/intel8x0.c  与module_pci_driver调用相关。那么由上文，是level 6。</p>
+<h3 id="安装bootchart"><a href="#安装bootchart" class="headerlink" title="安装bootchart"></a>安装bootchart</h3><p>​    首先，应该安装的是systemd-bootchart，通过apt install 安装。然后apt show systemd-bootchart去查看使用说明。<br>会显示要求和initcall_debug时候一样。要求在kernel commanline 中加入使用说明中的部分。在我的机器上是： init=/lib/systemd/systemd-bootchart。</p>
+<p>​    那么和配置initcall_debug的时候一样的步骤。打开 /etc/default/grub. 在commandline 一行的引号内加入上面所说的参数，然后保存更新grub配置。此时reboot启动。会注意到在进入登陆页面之后，有一信息被打印出来：systemd-bootchart wrote /run/log/xxxxx.svg 告诉了你svg文件被写到了哪里。大功告成。</p>
+<p><img src="/Users/jinhongye/Downloads/bootchart-20181009-0317.svg" alt="bootchart-20181009-0317"></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Linux/" rel="tag"># Linux</a>
+          
+            <a href="/tags/技术/" rel="tag"># 技术</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/09/29/擦统虚拟机配置/" rel="next" title="操统虚拟机配置">
+                <i class="fa fa-chevron-left"></i> 操统虚拟机配置
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">Mooler</p>
+              <p class="site-description motion-element" itemprop="description">The Starry Heavens without and The Moral Law within.</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/Categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#开启-initcall-debug-并获取trace信息"><span class="nav-number">1.</span> <span class="nav-text">开启 initcall_debug,并获取trace信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#采用boolgrah-pl生成SVG图形"><span class="nav-number">2.</span> <span class="nav-text">采用boolgrah.pl生成SVG图形</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查看前十大时间占用的initcall并分析"><span class="nav-number">3.</span> <span class="nav-text">查看前十大时间占用的initcall并分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#aesni-init"><span class="nav-number">3.1.</span> <span class="nav-text">aesni_init</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#vgdrvLinuxModInit"><span class="nav-number">3.2.</span> <span class="nav-text">vgdrvLinuxModInit</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#acpi"><span class="nav-number">3.3.</span> <span class="nav-text">acpi</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#init-module"><span class="nav-number">3.4.</span> <span class="nav-text">init_module</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#piix4-driver-init"><span class="nav-number">3.5.</span> <span class="nav-text">piix4_driver_init</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ahi-pci-driver-init"><span class="nav-number">3.6.</span> <span class="nav-text">ahi_pci_driver_init</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#e1000-init-module"><span class="nav-number">3.7.</span> <span class="nav-text">e1000_init_module</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#populate-rootfs"><span class="nav-number">3.8.</span> <span class="nav-text">populate_rootfs</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#vbox-init"><span class="nav-number">3.9.</span> <span class="nav-text">vbox_init</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#intel8x0-driver-init"><span class="nav-number">3.10.</span> <span class="nav-text">intel8x0_driver_init</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#安装bootchart"><span class="nav-number">4.</span> <span class="nav-text">安装bootchart</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Mooler</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
